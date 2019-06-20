@@ -102,3 +102,10 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+
+#VS
+.vs/
+*.json
+*.crt
+*.pem
+*.suo
