@@ -9,8 +9,7 @@ def log(msg,o):
     #print( "%s:%s" % (args[0], values[args[0]]) )
     print(">=======================")
     print("{} :".format(msg))
-    for field in o.__fields__:
-        print("{}={}".format(field, str(getattr(o, field, None))))
+    print(o)
     print("<=======================\n")
 
 
@@ -23,7 +22,7 @@ class ELF(object):
             raise ELFError('Only 32bit supported for now! ELF_CLASS %s' % repr(self.elfclass))
         self.header = ELF32_Ehdr();
         data = self.stream.read( len(self.header) )
-        self.header.unpack(data)
+        self.header.unpack(data, self.is_little_endian )
         log("Header",self.header)
 
 
@@ -49,11 +48,9 @@ class ELF(object):
 
             ei_data = self.stream.read(1)
             if ei_data == b'\x01':
-                self.little_endian = True
-                ELF_byte_order=cstruct.LITTLE_ENDIAN
+                self.is_little_endian = True
             elif ei_data == b'\x02':
-                self.little_endian = False
-                ELF_byte_order=cstruct.BIG_ENDIAN
+                self.is_little_endian = False
             else:
                 raise ELFError('Invalid EI_DATA %s' % repr(ei_data))
         finally:

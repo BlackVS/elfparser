@@ -7,225 +7,117 @@ import sys
 __all__ = ['BinStruct',
           ]
 
-BIN_BYTEORDER_LE = 1
-BIG_BYTEORDER_BE = 2
-
-__byte_order__ = BIN_BYTEORDER_LE
-
-BIN_ARRAYS = {
-    'bytes' : ('c','bytes', 1),
-    }
-
-BIN_TYPE_TO_FORMAT = {
+# type: fmt
+BIN_TYPE_IDX_FMT   = 0
+BIN_TYPE_IDX_PYTHON_TYPE = 1
+BIN_TYPES = {
     # "alias" : ( pack flag, python type, size )
-    'pad'   : ('x', None,  1),
-    'bool'  : ('?', bool,  1),
-    'char'  : ('b', str,   1),
-    'byte'  : ('B', int,   1),
-    'int8'  : ('b', int,   1),
-    'uint8' : ('B', int,   1),
-    'int16' : ('h', int,   2),
-    'uint16': ('H', int,   2),
-    'int32' : ('i', int,   4),
-    'uint32': ('I', int,   4),
-    'int64' : ('q', int,   8),
-    'uint64': ('Q', int,   8),
+    'pad'   : ('x', int),
+    'bool'  : ('?', bool),
+    'char'  : ('b', str ),
+    'byte'  : ('B', int ),
+    'int8'  : ('b', int ),
+    'uint8' : ('B', int ),
+    'int16' : ('h', int ),
+    'uint16': ('H', int ),
+    'int32' : ('i', int ),
+    'uint32': ('I', int ),
+    'int64' : ('q', int ),
+    'uint64': ('Q', int ),
 }
 
-class BinStructMeta(type):
-    def __new__(mcs, name, bases, dict):
-        __struct__ = dict.get("__struct__", None)
-        if __struct__ is not None:
-            dict['__fmt__'], dict['__fields__'], dict['__fields_types__'] = mcs.parse_struct(__struct__)
-            if '__byte_order__' in dict:
-                dict['__fmt__'] = dict['__byte_order__'] + dict['__fmt__']
-            # Add the missing fields to the class
-            for field in dict['__fields__']:
-                if field not in dict:
-                    dict[field] = None
-            # Calculate the structure size
-            dict['__size__'] = struct.calcsize(dict['__fmt__'])
-        new_class = type.__new__(mcs, name, bases, dict)
-        if __struct__ is not None:
-            STRUCTS[name] = new_class
-        return new_class
 
-    @staticmethod
-    def parse_struct(st):
-        # naive C struct parsing
-        fmt = []
-        fields = []
-        fields_types = {}
-        # remove the comments
-        st = st.replace("*/","*/\n")
-        st = "  ".join(re.split("/\*.*\*/",st))
-        st = "\n".join([s.split("//")[0] for s in st.split("\n")])
-        st = st.replace("\n", " ")
-        for line_s in st.split(";"):
-            line_s = line_s.strip()
-            if line_s:
-                line = line_s.split()
-                if len(line) < 2:
-                    raise Exception("Error parsing: " + line_s)
-                vtype = line[0].strip()
-                # signed/unsigned/struct
-                if vtype == 'unsigned' or vtype == 'signed' or vtype == 'struct' and len(line) > 2:
-                    vtype = vtype + " " + line[1].strip()
-                    del line[0]
-                vname = line[1]
-                # short int, long int, or long long
-                if vname == 'int' or vname == 'long':
-                    vtype = vtype + " " + vname
-                    del line[0]
-                    vname = line[1]
-                # void *
-                if vname.startswith("*"):
-                    vname = vname[1:]
-                    vtype = 'void *'
-                # parse length
-                vlen = 1
-                if "[" in vname:
-                    t = vname.split("[")
-                    if len(t) != 2:
-                        raise Exception("Error parsing: " + line_s)
-                    vname = t[0].strip()
-                    vlen = t[1]
-                    vlen = vlen.split("]")[0].strip()
-                    try:
-                        vlen = int(vlen)
-                    except:
-                        vlen = DEFINES.get(vlen, None)
-                        if vlen is None:
-                            raise
+class BinStructMeta(type):
+    def __new__(cls, name, bases, dct):
+        __DEFINE_STRUCT__ = dct.get("__DEFINE_STRUCT__", None)
+        __fmt__        = ""
+        __data__       = dict()
+        __datastruct__ = list()
+        if __DEFINE_STRUCT__ is not None: #BinStructMeta and BinStruct has not __struct__ at init time
+            #parse
+            reConsoleParser = re.compile(r"([\w.]+)\s*([\w.]+)\s*(?:\[(\d+)\])?;")
+
+            try:
+                parsed = reConsoleParser.findall(__DEFINE_STRUCT__)
+            except Exception as inst:
+                raise Exception("Error parsing: " + __DEFINE_STRUCT__)
+            pos=0
+            for (vtype, vname, varrsize) in parsed:
+                if varrsize==None or varrsize=='':
+                    varrsize=1
+                # if known ordinary type
+                t=BIN_TYPES.get(vtype,None)
+                varrsize=max(1, int(varrsize))
+                if t!=None:
+                    fmt = t[BIN_TYPE_IDX_FMT]
+                    if varrsize==1:
+                        __datastruct__.append( (vname, vtype, fmt, pos) )
+                        __data__[vname]=t[BIN_TYPE_IDX_PYTHON_TYPE]()
+                    else:
+                        if len(fmt)==1:
+                            fmt=str(varrsize)+fmt
                         else:
-                            vlen = int(vlen)
-                while vtype in TYPEDEFS:
-                    vtype = TYPEDEFS[vtype]
-                if vtype.startswith('struct '):
-                    vtype = vtype[7:]
-                    t = STRUCTS.get(vtype, None)
-                    if t is None:
-                        raise Exception("Unknow struct \"" + vtype + "\"")
-                    vtype = t
-                    ttype = "c"
-                    vlen = vtype.size * vlen
-                else:
-                    ttype = C_TYPE_TO_FORMAT.get(vtype, None)
-                    if ttype is None:
-                        raise Exception("Unknow type \"" + vtype + "\"")
-                fields.append(vname)
-                fields_types[vname] = (vtype, vlen)
-                if vlen > 1:
-                    fmt.append(str(vlen))
-                fmt.append(ttype)
-        fmt = "".join(fmt)
-        return fmt, fields, fields_types
+                            fmt=fmt*varrsize
+                        __datastruct__.append( (vname, vtype, fmt, pos) )
+                        __data__[vname]= [t[BIN_TYPE_IDX_PYTHON_TYPE]()]*varrsize
+                    __fmt__  += fmt
+                    pos+=struct.calcsize(fmt)
+                    continue
+            dct['__packedsize__'] = struct.calcsize(__fmt__)
+            dct['__fmt__']        = __fmt__
+            dct['__data__']       = __data__
+            dct['__datastruct__'] = __datastruct__
+        new_cls = super().__new__(cls, name, bases, dct)
+        if __fmt__:
+            BIN_TYPES[name]=(__fmt__,new_cls)
+        return new_cls
 
     def __len__(cls):
-        return cls.__size__
+        """ Structure size (in bytes) """
+        return cls.__packedsize__
 
     @property
     def size(cls):
         """ Structure size (in bytes) """
-        return cls.__size__
+        return cls.__packedsize__
 
-_BinStructParent = BinStructMeta('_BinStructParent', (object, ), {})
+#_BinStructParent = BinStructMeta('_BinStructParent', (object, ), {})
 
-#class BinStruct(metaclass = BinStructMeta):
-class BinStruct(_BinStructParent):
-    def __init__(self, string=None, **kargs):
-        if string is not None:
-            self.unpack(string)
-        else:
-            try:
-                self.unpack(string)
-            except:
-                pass
-        for key, value in kargs.items():
-            setattr(self, key, value)
+class BinStruct(metaclass = BinStructMeta):
+#class BinStruct(_BinStructParent):
+    def __init__(self, stream=None, buffer=None):
+        if not stream and not buffer:
+            pass
 
-    def unpack(self, string):
-        """
-        Unpack the string containing packed C structure data
-        """
-        if string is None:
-            string = CHAR_ZERO * self.__size__
-        data = struct.unpack(self.__fmt__, string)
-        i = 0
-        for field in self.__fields__:
-            (vtype, vlen) = self.__fields_types__[field]
-            if vtype == 'char': # string
-                setattr(self, field, data[i])
-                i = i + 1
-            elif isinstance(vtype, CStructMeta):
-                num = int(vlen / vtype.size)
-                if num == 1: # single struct
-                    sub_struct = vtype()
-                    sub_struct.unpack(EMPTY_BYTES_STRING.join(data[i:i+sub_struct.size]))
-                    setattr(self, field, sub_struct)
-                    i = i + sub_struct.size
-                else: # multiple struct
-                    sub_structs = []
-                    for j in range(0, num):
-                        sub_struct = vtype()
-                        sub_struct.unpack(EMPTY_BYTES_STRING.join(data[i:i+sub_struct.size]))
-                        i = i + sub_struct.size
-                        sub_structs.append(sub_struct)
-                    setattr(self, field, sub_structs)
-            elif vlen == 1:
-                setattr(self, field, data[i])
-                i = i + vlen
+    def unpack(self, buffer, isLE=True):
+        if len(buffer)<self.size:
+            raise Exception("Error parsing: " + __DEFINE_STRUCT__)
+        for (vname, vtype, fmt, pos) in self.__datastruct__:
+            if isinstance(self.__data__[vname],BinStruct):
+                #recursive unpack
+                self.__data__[vname].unpack(buffer[pos:],isLE)
             else:
-                setattr(self, field, list(data[i:i+vlen]))
-                i = i + vlen
+                data = struct.unpack_from(fmt, buffer, pos)
+                if len(data)==1:
+                    self.__data__[vname]=type(self.__data__[vname])(data[0])
+                else:
+                    self.__data__[vname]=type(self.__data__[vname])(data)
 
-    def pack(self):
-        """
-        Pack the structure data into a string
-        """
-        data = []
-        for field in self.__fields__:
-            (vtype, vlen) = self.__fields_types__[field]
-            if vtype == 'char': # string
-                data.append(getattr(self, field))
-            elif isinstance(vtype, CStructMeta):
-                num = int(vlen / vtype.size)
-                if num == 1: # single struct
-                    v = getattr(self, field, vtype())
-                    v = v.pack()
-                    if sys.version_info >= (3, 0):
-                        v = ([bytes([x]) for x in v])
-                    data.extend(v)
-                else: # multiple struct
-                    values = getattr(self, field, [])
-                    for j in range(0, num):
-                        try:
-                            v = values[j]
-                        except:
-                            v = vtype()
-                        v = v.pack()
-                        if sys.version_info >= (3, 0):
-                            v = ([bytes([x]) for x in v])
-                        data.extend(v)
-            elif vlen == 1:
-                data.append(getattr(self, field))
-            else:
-                v = getattr(self, field)
-                v = v[:vlen] + [0] * (vlen - len(v))
-                data.extend(v)
-        return struct.pack(self.__fmt__, *data)
+    def pack(self, isLE=True):
+        return None
+
 
     def clear(self):
         self.unpack(None)
 
     def __len__(self):
         """ Structure size (in bytes) """
-        return self.__size__
+        return self.__packedsize__
 
     @property
     def size(self):
         """ Structure size (in bytes) """
-        return self.__size__
+        return self.__packedsize__
 
     def __eq__(self, other):
         return (isinstance(other, self.__class__) and self.__dict__ == other.__dict__)
@@ -233,11 +125,26 @@ class BinStruct(_BinStructParent):
     def __ne__(self, other):
         return not self.__eq__(other)
 
-    def __str__(self):
-        result = []
-        for field in self.__fields__:
-            result.append(field + "=" + str(getattr(self, field, None)))
-        return type(self).__name__ + "(" + ", ".join(result) + ")"
+    def format_as_str(self, shift=0):
+        prefix=""
+        if shift:
+            prefix=" "*shift
+        result = prefix + "<{}> :\n".format(type(self).__name__)
+        for field, value in self.__data__.items():
+            if isinstance(value,BinStruct):
+                result += prefix + "{} = ".format(field)
+                result += prefix + value.format_as_str(shift+4)
+            else:
+                if isinstance(value, int):
+                    value=hex(value)
+                if isinstance(value, list) or isinstance(value, tuple):
+                    result += prefix + field + " = [ " + ", ".join(map(lambda v: hex(v) if isinstance(v,int) else str(v), value)) + " ]\n"
+                else:
+                    result += prefix + "{} = {}\n".format(field, value)
+        return result 
+
+    def __str__(self, shift=0):
+        return  self.format_as_str()
 
     def __repr__(self):
         return self.__str__()
