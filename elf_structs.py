@@ -34,3 +34,15 @@ class ELF32_Ehdr(BinStruct):
         uint16		e_shstrndx;
     """
 assert(len(ELF32_Ehdr)==52)
+
+class ELF32_PHeader(BinStruct):
+    __DEFINE_STRUCT__ = """
+        uint32      p_type;
+        uint32      p_offset;
+        uint32      p_vaddr;
+        uint32      p_paddr;
+        uint32      p_filesz;
+        uint32      p_memsz;
+        uint32      p_flags;
+        uint32      p_align;
+    """

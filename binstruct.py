@@ -3,6 +3,7 @@
 import re
 import struct
 import sys
+import os, os.path
 
 __all__ = ['BinStruct',
           ]
@@ -50,18 +51,19 @@ class BinStructMeta(type):
                 varrsize=max(1, int(varrsize))
                 if t!=None:
                     fmt = t[BIN_TYPE_IDX_FMT]
+                    sz = struct.calcsize(fmt)
                     if varrsize==1:
-                        __datastruct__.append( (vname, vtype, fmt, pos) )
+                        __datastruct__.append( (vname, vtype, fmt, pos, sz) )
                         __data__[vname]=t[BIN_TYPE_IDX_PYTHON_TYPE]()
                     else:
                         if len(fmt)==1:
                             fmt=str(varrsize)+fmt
                         else:
                             fmt=fmt*varrsize
-                        __datastruct__.append( (vname, vtype, fmt, pos) )
+                        __datastruct__.append( (vname, vtype, fmt, pos, sz) )
                         __data__[vname]= [t[BIN_TYPE_IDX_PYTHON_TYPE]()]*varrsize
                     __fmt__  += fmt
-                    pos+=struct.calcsize(fmt)
+                    pos += sz
                     continue
             dct['__packedsize__'] = struct.calcsize(__fmt__)
             dct['__fmt__']        = __fmt__
@@ -83,54 +85,29 @@ class BinStructMeta(type):
 
 #_BinStructParent = BinStructMeta('_BinStructParent', (object, ), {})
 
-class BinStruct(metaclass = BinStructMeta):
+class BinStruct(object, metaclass = BinStructMeta):
 #class BinStruct(_BinStructParent):
-    def __init__(self, stream=None, buffer=None):
-        if not stream and not buffer:
-            pass
-
-    def unpack(self, buffer, isLE=True):
-        if len(buffer)<self.size:
-            raise Exception("Error parsing: " + __DEFINE_STRUCT__)
-        for (vname, vtype, fmt, pos) in self.__datastruct__:
-            if isinstance(self.__data__[vname],BinStruct):
-                #recursive unpack
-                self.__data__[vname].unpack(buffer[pos:],isLE)
-            else:
-                data = struct.unpack_from(fmt, buffer, pos)
-                if len(data)==1:
-                    self.__data__[vname]=type(self.__data__[vname])(data[0])
-                else:
-                    self.__data__[vname]=type(self.__data__[vname])(data)
-
-    def pack(self, isLE=True):
-        return None
-
-
-    def clear(self):
-        self.unpack(None)
+    def __init__(self, isLE=None, stream=None):
+        if isLE == None:
+            self.struct_byteorder_format=''
+        else:
+            self.struct_byteorder_format=('>','<')[isLE]
+        #if buffer!=None:
+        #    self.unpack(buffer)
+        if stream!=None:
+            self.read_and_parse(stream)
 
     def __len__(self):
         """ Structure size (in bytes) """
         return self.__packedsize__
-
-    @property
-    def size(self):
-        """ Structure size (in bytes) """
-        return self.__packedsize__
-
-    def __eq__(self, other):
-        return (isinstance(other, self.__class__) and self.__dict__ == other.__dict__)
-
-    def __ne__(self, other):
-        return not self.__eq__(other)
 
     def format_as_str(self, shift=0):
         prefix=""
         if shift:
             prefix=" "*shift
         result = prefix + "<{}> :\n".format(type(self).__name__)
-        for field, value in self.__data__.items():
+        for (field, vtype, fmt, fpos, vsize) in self.__datastruct__:
+            value = self.__data__[field]
             if isinstance(value,BinStruct):
                 result += prefix + "{} = ".format(field)
                 result += prefix + value.format_as_str(shift+4)
@@ -143,9 +120,65 @@ class BinStruct(metaclass = BinStructMeta):
                     result += prefix + "{} = {}\n".format(field, value)
         return result 
 
+    def format_as_dump(self):
+        result=""
+        ###
+        result += ":> {}\n".format(type(self).__name__)
+        for (vname, vtype, fmt, fpos, vsize) in self.__datastruct__:
+            vpos = fpos
+            value = self.__data__[vname]
+            if isinstance(value,BinStruct):
+                result += value.format_as_dump()
+            else:
+                if isinstance(value, int):
+                    value=hex(value)
+                if isinstance(value, list) or isinstance(value, tuple):
+                    result += "{:08x} {:02x} {:16} : [ {} ]\n".format(vpos, vsize, vname, ", ".join(map(lambda v: hex(v) if isinstance(v,int) else str(v), value)))
+                else:
+                    result += "{:08x} {:02x} {:16} : {}\n".format(vpos, vsize, vname, value)
+        result += ":< {}\n".format(type(self).__name__)
+        return result 
+
     def __str__(self, shift=0):
         return  self.format_as_str()
 
     def __repr__(self):
         return self.__str__()
 
+    def __getattr__(self, name):
+        if name in self.__data__:
+            return self.__data__[name]
+        raise AttributeError
+
+    def unpack(self, buffer):
+        if len(buffer)<self.__packedsize__:
+            raise Exception("Error parsing: " + __DEFINE_STRUCT__)
+        for (vname, vtype, fmt, pos, sz) in self.__datastruct__:
+            if isinstance(self.__data__[vname],BinStruct):
+                #recursive unpack
+                self.__data__[vname].unpack(buffer[pos:])
+            else:
+                data = struct.unpack_from(self.struct_byteorder_format+fmt, buffer, pos)
+                if len(data)==1:
+                    self.__data__[vname]=type(self.__data__[vname])(data[0])
+                else:
+                    self.__data__[vname]=type(self.__data__[vname])(data)
+
+    def read_and_parse(self, stream):
+        self.pos = stream.tell()
+        self.data = stream.read( self.__packedsize__ )
+        self.unpack(self.data)
+
+    def dump(self, element_name, destdir, save_bin=True, save_parsed=True):
+        if destdir==None:
+            return
+        if not os.path.exists(destdir):
+            os.makedirs(destdir)
+        if save_bin:
+            fname_bin    = os.path.join( destdir, "{}.bin".format(element_name))
+            with open(fname_bin, "wb+") as f:
+                f.write(self.data)
+        if save_parsed:
+            fname_parsed = os.path.join( destdir, "{}.parsed".format(element_name))
+            with open(fname_parsed,"wt+") as f:
+                f.write(self.format_as_dump())
