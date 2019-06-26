@@ -5,14 +5,14 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{4e290f37-eda4-454c-9b00-263709bd95d2}</ProjectGuid>
     <ProjectHome />
-    <StartupFile>elf_parse.py</StartupFile>
+    <StartupFile>elf_assembler.py</StartupFile>
     <SearchPath />
     <WorkingDirectory>.</WorkingDirectory>
     <OutputPath>.</OutputPath>
     <ProjectTypeGuids>{888888a0-9f3d-457c-b088-3a5042f75d52}</ProjectTypeGuids>
     <LaunchProvider>Standard Python launcher</LaunchProvider>
     <InterpreterId />
-    <CommandLineArguments>badge\nn-badge195.elf parsed\</CommandLineArguments>
+    <CommandLineArguments>assembly assembly\output.elf</CommandLineArguments>
     <EnableNativeCodeDebugging>False</EnableNativeCodeDebugging>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'" />
@@ -25,8 +25,9 @@
     <Compile Include="elf.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="elf_assembler.py" />
     <Compile Include="elf_exceptions.py" />
-    <Compile Include="elf_parse.py" />
+    <Compile Include="elf_parser.py" />
     <Compile Include="elf_structs.py" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />

@@ -11,10 +11,11 @@ if __name__ == '__main__':
 #        process_file0(filename)
         print('Processing file:', filename)
         with open(filename, 'rb') as f:
-            elffile=ELF(f, output_dir)
-            elffile.dump_program_headers()
-            elffile.dump_section_headers()
+            elffile=ELFParser(f, output_dir, True)
+            elffile.dump_program_headers(True)
+            elffile.dump_section_headers(True)
+            elffile.write_structure()
         print("done...")
     else:
         print("Incorrect params. Usage:")
-        print("elf_parse.py <input_bin_file> <output_folder>")
+        print("elf_parser.py <input_bin_file> <output_folder>")

@@ -1,0 +1,96 @@
+ELF Header:
+  Magic:   7f 45 4c 46 01 01 01 00 00 00 00 00 00 00 00 00
+  Class:                             ELF32
+  Data:                              2's complement, little endian
+  Version:                           1 (current)
+  OS/ABI:                            UNIX - System V
+  ABI Version:                       0
+  Type:                              EXEC (Executable file)
+  Machine:                           <unknown>
+  Version:                           0x1
+  Entry point address:               0x40080f2c
+  Start of program headers:          52 (bytes into file)
+  Start of section headers:          4827816 (bytes into file)
+  Flags:                             0x0
+  Size of this header:               52 (bytes)
+  Size of program headers:           32 (bytes)
+  Number of program headers:         5
+  Size of section headers:           40 (bytes)
+  Number of section headers:         52
+  Section header string table index: 49
+
+Section Headers:
+  [Nr] Name              Type            Addr     Off    Size   ES Flg Lk Inf Al
+  [ 0]                   NULL            00000000 000000 000000 00      0   0  0
+  [ 1] .rtc.text         PROGBITS        400c0000 09c5ca 000000 00   W  0   0  1
+  [ 2] .rtc.dummy        PROGBITS        3ff80000 09c5ca 000000 00   W  0   0  1
+  [ 3] .rtc.force_fast   PROGBITS        3ff80000 09c5ca 000000 00   W  0   0  1
+  [ 4] .rtc_noinit       PROGBITS        50000000 09c5ca 000000 00   W  0   0  1
+  [ 5] .rtc.force_slow   PROGBITS        50000000 09c5ca 000000 00   W  0   0  1
+  [ 6] .iram0.vectors    PROGBITS        40080000 017930 000400 00  AX  0   0  4
+  [ 7] .iram0.text       PROGBITS        40080400 017d30 0101d7 00 WAX  0   0  4
+  [ 8] .dram0.data       PROGBITS        3ffbdb60 015280 0026b0 00  WA  0   0 16
+  [ 9] .noinit           PROGBITS        3ffc0210 09c5ca 000000 00   W  0   0  1
+  [10] .dram0.bss        NOBITS          3ffc0210 017930 006640 00  WA  0   0  8
+  [11] .flash.rodata     PROGBITS        3f400020 0000e0 0151a0 00  WA  0   0 16
+  [12] .flash.text       PROGBITS        400d0018 027f08 0746c2 00  AX  0   0  4
+  [13] .debug_frame      PROGBITS        00000000 09c5cc 018538 00      0   0  4
+  [14] .debug_info       PROGBITS        00000000 0b4b04 1b171f 00      0   0  1
+  [15] .debug_abbrev     PROGBITS        00000000 266223 03b137 00      0   0  1
+  [16] .debug_aranges    PROGBITS        00000000 2a1360 009a10 00      0   0  8
+  [17] .debug_ranges     PROGBITS        00000000 2aad70 00e830 00      0   0  8
+  [18] .debug_line       PROGBITS        00000000 2b95a0 0c62d7 00      0   0  1
+  [19] .debug_str        PROGBITS        00000000 37f877 047fa6 01  MS  0   0  1
+  [20] .comment          PROGBITS        00000000 3c781d 000168 01  MS  0   0  1
+  [21] .xtensa.info      NOTE            00000000 3c7985 000038 00      0   0  1
+  [22] .xt.lit._ZN3nvs4L PROGBITS        00000000 3c79bd 000008 00      0   0  1
+  [23] .xt.lit._ZN3nvs4L PROGBITS        00000000 3c79c5 000000 00      0   0  1
+  [24] .xt.lit._ZN3nvs4L PROGBITS        00000000 3c79c5 000000 00      0   0  1
+  [25] .xt.prop._ZN3nvs4 PROGBITS        00000000 3c79c5 00000c 00      0   0  1
+  [26] .xt.prop._ZN3nvs4 PROGBITS        00000000 3c79d1 000000 00      0   0  1
+  [27] .xt.prop._ZN3nvs4 PROGBITS        00000000 3c79d1 00003c 00      0   0  1
+  [28] .xt.prop._ZN3nvs4 PROGBITS        00000000 3c7a0d 000030 00      0   0  1
+  [29] .xt.prop._ZN3nvs4 PROGBITS        00000000 3c7a3d 000030 00      0   0  1
+  [30] .xt.prop._ZN14int PROGBITS        00000000 3c7a6d 000054 00      0   0  1
+  [31] .xt.lit._ZN14intr PROGBITS        00000000 3c7ac1 000000 00      0   0  1
+  [32] .xt.prop._ZN14int PROGBITS        00000000 3c7ac1 00006c 00      0   0  1
+  [33] .xt.prop._ZN14int PROGBITS        00000000 3c7b2d 000054 00      0   0  1
+  [34] .xt.lit._ZN3nvs4I PROGBITS        00000000 3c7b81 000000 00      0   0  1
+  [35] .xt.prop._ZN3nvs4 PROGBITS        00000000 3c7b81 000000 00      0   0  1
+  [36] .xt.prop._ZN3nvs2 PROGBITS        00000000 3c7b81 000030 00      0   0  1
+  [37] .xt.prop._ZN3nvs4 PROGBITS        00000000 3c7bb1 00003c 00      0   0  1
+  [38] .xt.prop._ZNK19Co PROGBITS        00000000 3c7bed 000024 00      0   0  1
+  [39] .xt.lit._ZN14intr PROGBITS        00000000 3c7c11 000000 00      0   0  1
+  [40] .xt.prop._ZN14int PROGBITS        00000000 3c7c11 00003c 00      0   0  1
+  [41] .xt.prop._ZN14int PROGBITS        00000000 3c7c4d 00003c 00      0   0  1
+  [42] .xt.prop._ZN14int PROGBITS        00000000 3c7c89 000054 00      0   0  1
+  [43] .xt.prop._ZTISt9e PROGBITS        00000000 3c7cdd 00000c 00      0   0  1
+  [44] .xt.prop._ZTISt9b PROGBITS        00000000 3c7ce9 00000c 00      0   0  1
+  [45] .xt.prop._ZTVN10_ PROGBITS        00000000 3c7cf5 00000c 00      0   0  1
+  [46] .xt.prop._ZTVSt9b PROGBITS        00000000 3c7d01 00000c 00      0   0  1
+  [47] .xt.prop._ZTVN10_ PROGBITS        00000000 3c7d0d 00000c 00      0   0  1
+  [48] .debug_loc        PROGBITS        00000000 3c7d19 0ad327 00      0   0  1
+  [49] .shstrtab         STRTAB          00000000 475040 0005c3 00      0   0  1
+  [50] .symtab           SYMTAB          00000000 475604 0123b0 10     51 1894  4
+  [51] .strtab           STRTAB          00000000 4879b4 0130f4 00      0   0  1
+Key to Flags:
+  W (write), A (alloc), X (execute), M (merge), S (strings), I (info),
+  L (link order), O (extra OS processing required), G (group), T (TLS),
+  C (compressed), x (unknown), o (OS specific), E (exclude),
+  p (processor specific)
+
+Program Headers:
+  Type           Offset   VirtAddr   PhysAddr   FileSiz MemSiz  Flg Align
+  LOAD           0x000000 0x3f3fff40 0x3f3fff40 0x15280 0x15280 RW  0x1
+  LOAD           0x015280 0x3ffbdb60 0x3ffbdb60 0x026b0 0x08cf0 RW  0x1
+  LOAD           0x017930 0x40080000 0x40080000 0x00400 0x00400 R E 0x1
+  LOAD           0x017d30 0x40080400 0x40080400 0x101d7 0x101d7 RWE 0x1
+  LOAD           0x027f08 0x400d0018 0x400d0018 0x746c2 0x746c2 R E 0x1
+
+ Section to Segment mapping:
+  Segment Sections...
+   00     .flash.rodata 
+   01     .dram0.data .dram0.bss 
+   02     .iram0.vectors 
+   03     .iram0.text 
+   04     .flash.text 

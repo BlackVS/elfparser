@@ -33,6 +33,7 @@ class BinStructMeta(type):
         __DEFINE_STRUCT__ = dct.get("__DEFINE_STRUCT__", None)
         __fmt__        = ""
         __datastruct__ = list()
+        __datastructdict__ = dict()
         if __DEFINE_STRUCT__ is not None: #BinStructMeta and BinStruct has not __struct__ at init time
             #parse
             reConsoleParser = re.compile(r"([\w.]+)\s*([\w.]+)\s*(?:\[(\d+)\])?;")
@@ -51,16 +52,13 @@ class BinStructMeta(type):
                 if t!=None:
                     fmt = t[BIN_TYPE_IDX_FMT]
                     sz = struct.calcsize(fmt)
-                        #__datastruct__.append( (vname, vtype, fmt, pos, sz) )
-                        #__data__[vname]=t[BIN_TYPE_IDX_PYTHON_TYPE]()
-                        #__datastruct__.append( (vname, vtype, fmt, pos, sz) )
-                        #__data__[vname]= [t[BIN_TYPE_IDX_PYTHON_TYPE]()]*varrsize
                     if varrsize>1: #arrays
                         if len(fmt)==1: #arrays of ordinal type
                             fmt=str(varrsize)+fmt
                         else: #arrays of complex type
                             fmt=fmt*varrsize
                     __datastruct__.append( (vname, vtype, varrsize, fmt, pos, sz) )
+                    __datastructdict__[vname]=(vtype, varrsize, fmt, pos, sz)
                     __fmt__  += fmt
                     pos += sz
                     continue
@@ -68,6 +66,7 @@ class BinStructMeta(type):
             dct['__fmt__']        = __fmt__
             #dct['__data__']       = __data__
             dct['__datastruct__'] = __datastruct__
+            dct['__datastructdict__'] = __datastructdict__
         new_cls = super().__new__(cls, name, bases, dct)
         if __fmt__:
             BIN_TYPES[name]=(__fmt__,new_cls)
@@ -87,7 +86,9 @@ class BinStructMeta(type):
 class BinStruct(object, metaclass = BinStructMeta):
 #class BinStruct(_BinStructParent):
     def __init__(self, isLE=None, stream=None):
-        self.raw_data=None
+        self.raw_is_dirty=True
+        self.raw_data = None
+        self.raw_pos  = None;
         self.parsed_data=dict()
 
 
@@ -163,6 +164,21 @@ class BinStruct(object, metaclass = BinStructMeta):
             return self.parsed_data[name]
         raise AttributeError
 
+    def __setitem__(self, name, value):
+        if not (name in self.parsed_data):
+            raise KeyError
+        vtype, varrsize, fmt, fpos, vsize = self.__datastructdict__[name]
+        if not isinstance(value, type(self.parsed_data[name])):
+            # try to convert first
+            if isinstance(value, str):
+                if isinstance(self.parsed_data[name],int):
+                    value=int(value,16) #only hex!!!
+        if not isinstance(value, type(self.parsed_data[name])):
+            raise ValueError
+        if self.parsed_data[name]!=value:
+            self.parsed_data[name]=value
+            self.raw_is_dirty=True
+
     def unpack(self, buffer):
         if len(buffer)<self.__packedsize__:
             raise Exception("Error parsing: " + __DEFINE_STRUCT__)
@@ -176,9 +192,10 @@ class BinStruct(object, metaclass = BinStructMeta):
                     self.parsed_data[vname]=type(self.parsed_data[vname])(data[0])
                 else:
                     self.parsed_data[vname]=type(self.parsed_data[vname])(data)
+        self.raw_is_dirty=False
 
     def read_and_parse(self, stream):
-        self.pos = stream.tell()
+        self.raw_pos  = stream.tell()
         self.raw_data = stream.read( self.__packedsize__ )
         self.unpack(self.raw_data)
 
@@ -187,11 +204,18 @@ class BinStruct(object, metaclass = BinStructMeta):
             return
         if not os.path.exists(destdir):
             os.makedirs(destdir)
+        fname_bin_short=""
         if save_bin:
-            fname_bin    = os.path.join( destdir, "{}.bin".format(element_name))
+            fname_bin_short = "{}.bin".format(element_name)
+            fname_bin    = os.path.join( destdir, fname_bin_short)
             with open(fname_bin, "wb+") as f:
                 f.write(self.raw_data)
+        fname_parsed_short=""
         if save_parsed:
-            fname_parsed = os.path.join( destdir, "{}.parsed".format(element_name))
+            fname_parsed_short = "{}.parsed".format(element_name)
+            fname_parsed = os.path.join( destdir, fname_parsed_short)
             with open(fname_parsed,"wt+") as f:
                 f.write(self.format_as_dump())
+
+        #( offest in file, fname_bin, fname_parsed)
+        return ( self.raw_pos, len(self.raw_data), type(self).__name__, fname_bin_short ) 
