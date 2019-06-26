@@ -12,8 +12,8 @@ if __name__ == '__main__':
         print('Processing file:', filename)
         with open(filename, 'rb') as f:
             elffile=ELF(f, output_dir)
-            idx=1
-            idx=elffile.dump_program_headers(idx)
+            elffile.dump_program_headers()
+            elffile.dump_section_headers()
         print("done...")
     else:
         print("Incorrect params. Usage:")
