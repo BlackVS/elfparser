@@ -16,9 +16,16 @@ assert(len(ELF_e_ident)==16)
 
 ## size = 52 for 32-bit
 #
+# ELF_e_ident    	e_ident;
 class ELF32_Ehdr(BinStruct):
     __DEFINE_STRUCT__ = """
-        ELF_e_ident    	e_ident;
+        uint8       EI_MAG[4];
+        uint8       EI_CLASS;   
+        uint8       EI_DATA;    
+        uint8       EI_VERSION; 
+        uint8       EI_OSABI;   
+        uint8       EI_ABIVERSION;
+        uint8       _padding[7];
         uint16		e_type;
         uint16		e_machine;
         uint32		e_version;

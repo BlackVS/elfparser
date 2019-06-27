@@ -1,0 +1,2 @@
+badge\nn-badge195.elf parsed\
+assembly\00.stripped_elf\ assembly\output.elf

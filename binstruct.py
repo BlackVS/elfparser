@@ -57,6 +57,7 @@ class BinStructMeta(type):
                             fmt=str(varrsize)+fmt
                         else: #arrays of complex type
                             fmt=fmt*varrsize
+                        sz*=varrsize
                     __datastruct__.append( (vname, vtype, varrsize, fmt, pos, sz) )
                     __datastructdict__[vname]=(vtype, varrsize, fmt, pos, sz)
                     __fmt__  += fmt
@@ -159,14 +160,15 @@ class BinStruct(object, metaclass = BinStructMeta):
     def __repr__(self):
         return self.__str__()
 
-    def __getattr__(self, name):
+    def get_value(self, name):
         if name in self.parsed_data:
             return self.parsed_data[name]
-        raise AttributeError
+        raise ELFError("get_value: no key {}".format(name))
 
-    def __setitem__(self, name, value):
+    def set_value(self, name, value):
         if not (name in self.parsed_data):
-            raise KeyError
+            raise ELFError("set_value: no key {}".format(name))
+
         vtype, varrsize, fmt, fpos, vsize = self.__datastructdict__[name]
         if not isinstance(value, type(self.parsed_data[name])):
             # try to convert first
@@ -178,6 +180,18 @@ class BinStruct(object, metaclass = BinStructMeta):
         if self.parsed_data[name]!=value:
             self.parsed_data[name]=value
             self.raw_is_dirty=True
+
+    #def __setattr__(self, name, value):
+    #    self._set_value(name, value)
+
+    def __getattr__(self, name):
+        return self.get_value(name)
+
+    def __setitem__(self, name, value):
+        self.set_value(name, value)
+
+    def __getitem__(self, name):
+        return self.get_value(name)
 
     def unpack(self, buffer):
         if len(buffer)<self.__packedsize__:

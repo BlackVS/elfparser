@@ -129,25 +129,23 @@ class ELFParser(object):
         if self.header==None or self.stream == None:
             raise ELFError("{}: No header or input stream!".format(__name__) )
 
-        f=None
-        f2=None
         try:
             self.stream.seek( self.header.e_shoff )
-            f=open(os.path.join( self.dest_dir, "elf_sections_info.txt"), "wt+")
-            f.write( "{:8}{:12}{:12}{:12}{:12}{:12}{:12}{:12}{:12}{:12}{:12}\n".format("idx", "sh_name", "sh_type", "sh_flags", "sh_addr", "sh_offset", "sh_size", "sh_link", "sh_info", "sh_addralign", "sh_entsize" ))
-            for i in range( self.header.e_shnum ):
-                shdr=ELF32_SectionHeader(self.is_little_endian)
-                if len(shdr)!=self.header.e_shentsize:
-                    raise ELFError("{}: Failed to parse sections headers!".format(__name__) )
-                shdr.read_and_parse(self.stream)
-                shdr_res=shdr.dump("section_{:02}.hdr".format(i), self.dest_dir)
-                f.write("{:4}    {:08x}    {:08x}    {:08x}    {:08x}    {:08x}    {:08x}    {:08x}    {:08x}    {:08x}    {:08x}\n".format(
-                         i, shdr.sh_name, shdr.sh_type, shdr.sh_flags, shdr.sh_addr, shdr.sh_offset, shdr.sh_size, shdr.sh_link, shdr.sh_info, shdr.sh_addralign, shdr.sh_entsize 
-                         )
-                        )
-                self.sections.append( shdr )
-                if store_in_structure:
-                    self.structure.append( shdr_res )
+            with open(os.path.join( self.dest_dir, "elf_sections_info.txt"), "wt+") as f:
+                f.write( "{:8}{:12}{:12}{:12}{:12}{:12}{:12}{:12}{:12}{:12}{:12}\n".format("idx", "sh_name", "sh_type", "sh_flags", "sh_addr", "sh_offset", "sh_size", "sh_link", "sh_info", "sh_addralign", "sh_entsize" ))
+                for i in range( self.header.e_shnum ):
+                    shdr=ELF32_SectionHeader(self.is_little_endian)
+                    if len(shdr)!=self.header.e_shentsize:
+                        raise ELFError("{}: Failed to parse sections headers!".format(__name__) )
+                    shdr.read_and_parse(self.stream)
+                    shdr_res=shdr.dump("section_{:02}.hdr".format(i), self.dest_dir)
+                    f.write("{:4}    {:08x}    {:08x}    {:08x}    {:08x}    {:08x}    {:08x}    {:08x}    {:08x}    {:08x}    {:08x}\n".format(
+                             i, shdr.sh_name, shdr.sh_type, shdr.sh_flags, shdr.sh_addr, shdr.sh_offset, shdr.sh_size, shdr.sh_link, shdr.sh_info, shdr.sh_addralign, shdr.sh_entsize 
+                             )
+                            )
+                    self.sections.append( shdr )
+                    if store_in_structure:
+                        self.structure.append( shdr_res )
                 
             #get sections names first
             raw_names=None
@@ -157,32 +155,42 @@ class ELFParser(object):
                 raw_names=self.stream.read(shdr.sh_size)
 
             ##
-            f2=open(os.path.join( self.dest_dir, "elf_sections_info2.txt"), "wt+")
-            f2_fmt_title = "{:4} {:8}  {:8}   {:10}   {:12}\n\n"
-            f2_fmt       = "{:4} {:08x}   {:10}   {:10}   {:12}\n"
-            f2.write(f2_fmt_title.format("#", "sh_offset", "sh_size", "v_addr", "name"))
-            for i,shdr in enumerate(self.sections):
-                section_name=shdr.sh_name
-                if shdr.sh_name!=0:
-                    section_name=get_cstring(raw_names, shdr.sh_name)
-                f2.write(f2_fmt.format(i, shdr.sh_offset, hex_or_none(shdr.sh_size), hex_or_none(shdr.sh_addr), section_name))
-                #####
-                sz=shdr.sh_size
-                if store_in_structure:
-                    self.structure.append( (shdr.sh_offset,sz, "raw", "section_{:02}".format(i)) )
-                if sz>0:
-                    fname_short="section_{:02}.bin".format(i)
-                    fname=os.path.join( self.dest_dir, fname_short)
-                    with open(fname,"wb+") as fb:
-                        self.stream.seek(shdr.sh_offset)
-                        data=self.stream.read(sz)
-                        fb.write(data)
+            with open(os.path.join( self.dest_dir, "elf_sections_info2.txt"), "wt+") as f2:
+                f2_fmt_title = "{:4} {:8}  {:8}   {:10}   {:12}\n\n"
+                f2_fmt       = "{:4} {:08x}   {:10}   {:10}   {:12}\n"
+                f2.write(f2_fmt_title.format("#", "sh_offset", "sh_size", "v_addr", "name"))
+                for i,shdr in enumerate(self.sections):
+                    section_name=shdr.sh_name
+                    if shdr.sh_name!=0:
+                        section_name=get_cstring(raw_names, shdr.sh_name)
+                    f2.write(f2_fmt.format(i, shdr.sh_offset, hex_or_none(shdr.sh_size), hex_or_none(shdr.sh_addr), section_name))
+                    #####
+                    sz=shdr.sh_size
+                    if store_in_structure:
+                        self.structure.append( (shdr.sh_offset,sz, "raw", "section_{:02}".format(i)) )
+                    if sz>0:
+                        fname_short="section_{:02}.bin".format(i)
+                        fname=os.path.join( self.dest_dir, fname_short)
+                        with open(fname,"wb+") as fb:
+                            self.stream.seek(shdr.sh_offset)
+                            data=self.stream.read(sz)
+                            fb.write(data)
+            ## sorted
+            with open(os.path.join( self.dest_dir, "elf_sections_info2_sorted.txt"), "wt+") as f2:
+                f2_fmt_title = "{:4} {:8}  {:8}   {:10}   {:12}\n\n"
+                f2_fmt       = "{:4} {:08x}   {:10}   {:10}   {:12}\n"
+                f2.write(f2_fmt_title.format("#", "sh_offset", "sh_size", "v_addr", "name"))
+                for i in sorted(range(len(self.sections)), key=lambda iv: self.sections[iv].sh_offset):
+                    shdr=self.sections[i]
+                    section_name=shdr.sh_name
+                    if shdr.sh_name!=0:
+                        section_name=get_cstring(raw_names, shdr.sh_name)
+                    f2.write(f2_fmt.format(i, shdr.sh_offset, hex_or_none(shdr.sh_size), hex_or_none(shdr.sh_addr), section_name))
 
         except Exception as e:
             raise e
         finally:
-            if f: f.close()
-            if f2: f2.close()
+            pass
 
     def write_structure(self):
         #self.structure.sort()
@@ -196,17 +204,31 @@ class ELFParser(object):
 
 
 class ELFAssembler(object):
-    def __init__(self, src_dir, output_file ):
+    def __init__(self, src_dir):
         self.header = None
-        self.program_headers = dict()
-        self.sections = dict()
-        self.structure = []
-        self.stream = open(output_file,"wb+")
+        self.program_headers = []
         self.src_dir = src_dir
-        #first read structure 
-        self.read_header()
-        self.read_structure()
-        self.analyze_segments()
+        self.init_header()
+        self.is_little_endian = None
+
+    def init_header(self):
+        self.header=ELF32_Ehdr()
+        self.header['EI_MAG'] = [ 0x7f, 0x45, 0x4c, 0x46 ]
+        self.header['EI_CLASS'] = 0x1 # 1=32 bit 2=64 bit
+        self.header['EI_DATA']  = 0x1 # 1 LE , 2 BE
+        self.header['EI_VERSION'] = 0x1
+        self.header['e_type'] = 0x2 # exec
+        self.header['e_version'] = 1
+        try:
+            with open(os.path.join( self.src_dir, ELF_FNAME_HEADER+".ini"),"rt") as f:
+                for t in f:
+                    a,b=t.split(":")
+                    a=a.strip()
+                    b=b.strip()
+                    self.header[a]=b
+        except:
+            pass
+        self.is_little_endian = self.header['EI_CLASS']==1
 
     def read_header(self):
         fheader=os.path.join( self.src_dir, ELF_FNAME_HEADER+".bin")
@@ -216,42 +238,66 @@ class ELFAssembler(object):
                 raise ELFError('Only 32bit supported for now! ELF_CLASS %s' % repr(self.elfclass))
             self.header=ELF32_Ehdr(self.is_little_endian, f)
 
-    def read_structure(self):
-        with open(os.path.join( self.src_dir, ELF_FNAME_STRUCTURE), "rt") as f:
-            for s in f:
-                spos, ssize, stype, *sfiles = s.split()
-                ipos  = int(spos ,16)
-                isize = int(ssize,16)
-                #print("{:08x} {:08x} {:25} {}".format(ipos, isize, stype, sfiles))
-                self.structure.append( (ipos, isize, stype, sfiles) )
-
-
     #walk through program headers in structer, load from raw and update loaded program headers/table
-    def analyze_segments(self):
-        #load raw
-        sizes=dict()
-        for p in filter(lambda s: s[2]=="ELF32_ProgramHeader", self.structure):
-            #print(p)
-            fname=p[3][0]
-            fseg =fname.split(".")[0]
-            seg_idx=int(fseg.split("_")[1],16)
-
-            with open(os.path.join(self.src_dir, fname), "rb") as f:
-                phdr=ELF32_ProgramHeader(self.is_little_endian, f)
-                self.program_headers[seg_idx]=phdr
-
-            sizes[seg_idx]=os.path.getsize( os.path.join( self.src_dir, fseg+".bin" ) )
-
+    def read_segments_info(self):
         ##load map file
-        with open(os.path.join( self.src_dir, "elf_segments_info.txt"), "rt") as fmap:
+        with open(os.path.join( self.src_dir, "elf_segments.map"), "rt") as fmap:
             titles = fmap.readline().split()
             #print(titles)
+            phdr=ELF32_ProgramHeader(self.is_little_endian)
+            phdr['p_type']  = 1
+            phdr['p_align'] = 1
+            phdr.filename = None
+
             for t in fmap:
                 values=t.split()
                 idx=int(values[0])
                 for i in range(1,len(values)):
-                    phdr[ titles[i] ] = values[i]
-                #check filesizes:
-                if ( phdr.p_filesz != sizes[idx]):
-                    raise ELFError("Filesize for segment () in map not equal to real file size: {}!={}".format(idx, phdr.p_filesz, sizes[idx]))
+                    n,v= titles[i], values[i]
+                    if n=='filename':
+                        phdr.filename = v
+                    else:
+                        phdr[ n ] = v
+                if phdr.filename:
+                    sz=os.path.getsize( os.path.join( self.src_dir, phdr.filename ) )
+                    if phdr['p_filesz']==0:
+                        phdr['p_filesz']=sz
+                    assert(phdr['p_filesz']==sz)
+                    if phdr['p_memsz']==0:
+                        phdr['p_memsz']=phdr['p_filesz']
+                    assert(phdr['p_memsz']>=phdr['p_filesz'])
 
+            self.program_headers.append(phdr)
+
+    def _calc_offsets(self):
+        # ELF Header
+        # Programs headers
+        # Sections headers (not supported yet)
+        # Programs/segments
+        # Sections (not supported yet)
+         
+        off  = 0
+        poff = 0 # 0 segment contains headers
+
+        #header is must
+        off += len(ELF32_Ehdr)
+        if self.program_headers:        
+            off+=len(self.program_headers)*len(ELF32_ProgramHeader)
+            for phdr in self.program_headers:
+                phdr.p_offset = poff
+                poff+=phdr.p_filesz
+
+    def update_raw_data(self):
+        self._calc_offsets()
+        #check program headers
+        #for phdr in self.program_headers:
+
+        #check section headers
+
+        #check header
+
+        pass
+
+    def write(self, output_file):
+        with open(output_file,"wb+") as stream:
+            pass

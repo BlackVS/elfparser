@@ -10,7 +10,10 @@ if __name__ == '__main__':
         filename  = sys.argv[2]
         #print('Processing file:', filename)
         #with open(filename, 'rb') as f:
-        elffile=ELFAssembler(input_dir, filename)
+        elffile=ELFAssembler(input_dir)
+        elffile.read_segments_info()
+        elffile.update_raw_data()
+        elffile.write(filename)
         print("done...")
     else:
         print("Incorrect params. Usage:")
