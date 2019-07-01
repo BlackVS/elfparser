@@ -53,6 +53,7 @@ class ELF32_ProgramHeader(BinStruct):
         uint32      p_flags;
         uint32      p_align;
     """
+assert(len(ELF32_ProgramHeader)==32)
 
 class ELF32_SectionHeader(BinStruct):
     __DEFINE_STRUCT__ = """

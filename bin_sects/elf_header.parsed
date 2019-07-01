@@ -1,0 +1,22 @@
+:> ELF32_Ehdr
+00000000 04 EI_MAG           : [ 0x7f, 0x45, 0x4c, 0x46 ]
+00000004 01 EI_CLASS         : 0x1
+00000005 01 EI_DATA          : 0x1
+00000006 01 EI_VERSION       : 0x1
+00000007 01 EI_OSABI         : 0x0
+00000008 01 EI_ABIVERSION    : 0x0
+00000009 07 _padding         : [ 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0 ]
+00000010 02 e_type           : 0x2
+00000012 02 e_machine        : 0x5e
+00000014 04 e_version        : 0x1
+00000018 04 e_entry          : 0x40080ffc
+0000001c 04 e_phoff          : 0x34
+00000020 04 e_shoff          : 0x117b48
+00000024 04 e_flags          : 0x0
+00000028 02 e_ehsize         : 0x34
+0000002a 02 e_phentsize      : 0x20
+0000002c 02 e_phnum          : 0x6
+0000002e 02 e_shentsize      : 0x28
+00000030 02 e_shnum          : 0x34
+00000032 02 e_shstrndx       : 0x31
+:< ELF32_Ehdr

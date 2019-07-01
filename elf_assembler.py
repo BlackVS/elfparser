@@ -12,7 +12,8 @@ if __name__ == '__main__':
         #with open(filename, 'rb') as f:
         elffile=ELFAssembler(input_dir)
         elffile.read_segments_info()
-        elffile.update_raw_data()
+        elffile.read_sections_info()
+        elffile.update_data()
         elffile.write(filename)
         print("done...")
     else:

@@ -12,7 +12,7 @@
     <ProjectTypeGuids>{888888a0-9f3d-457c-b088-3a5042f75d52}</ProjectTypeGuids>
     <LaunchProvider>Standard Python launcher</LaunchProvider>
     <InterpreterId />
-    <CommandLineArguments>assembly\00.stripped_elf\ assembly\output.elf</CommandLineArguments>
+    <CommandLineArguments>assembly\02.badge_bin_sects\ assembly\02.badge_bin_sects\badge_bin_sects.elf</CommandLineArguments>
     <EnableNativeCodeDebugging>False</EnableNativeCodeDebugging>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'" />
@@ -29,6 +29,10 @@
     <Compile Include="elf_exceptions.py" />
     <Compile Include="elf_parser.py" />
     <Compile Include="elf_structs.py" />
+    <Compile Include="extract_from_bin.py" />
+    <Compile Include="extract_segments.py" />
+    <Compile Include="nnc_assemble.py" />
+    <Compile Include="nnc_disassemble.py" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
 </Project>

@@ -1,0 +1,10 @@
+:> ELF32_ProgramHeader
+00000000 04 p_type           : 0x1
+00000004 04 p_offset         : 0x2f7b8
+00000008 04 p_vaddr          : 0x40080400
+0000000c 04 p_paddr          : 0x40080400
+00000010 04 p_filesz         : 0x914
+00000014 04 p_memsz          : 0x914
+00000018 04 p_flags          : 0x7
+0000001c 04 p_align          : 0x1
+:< ELF32_ProgramHeader

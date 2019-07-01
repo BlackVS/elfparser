@@ -1,2 +1,17 @@
+parse: 
 badge\nn-badge195.elf parsed\
-assembly\00.stripped_elf\ assembly\output.elf
+
+assemble: 
+assembly\00.stripped_elf\ assembly\00.stripped_elf\output.elf
+
+assemble: 
+assembly\01.badge_bin\ assembly\01.badge_bin\badge_bin.elf
+
+assemble: 
+assembly\01.badge_bin_2\ assembly\01.badge_bin_2\badge_bin.elf
+
+assemble: 
+assembly\02.badge_bin_sects\ assembly\02.badge_bin_sects\badge_bin_sects.elf
+
+nnc_disassemble:
+badge\nn-badge195.bin badge\

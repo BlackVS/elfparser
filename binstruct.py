@@ -92,11 +92,7 @@ class BinStruct(object, metaclass = BinStructMeta):
         self.raw_pos  = None;
         self.parsed_data=dict()
 
-
-        if isLE == None:
-            self.struct_byteorder_format=''
-        else:
-            self.struct_byteorder_format=('>','<')[isLE]
+        self.setByteOrder(isLE)
         self.clear()
         #if buffer!=None:
         #    self.unpack(buffer)
@@ -106,6 +102,12 @@ class BinStruct(object, metaclass = BinStructMeta):
     def __len__(self):
         """ Structure size (in bytes) """
         return self.__packedsize__
+
+    def setByteOrder(self, isLE):
+        if isLE == None:
+            self.struct_byteorder_format=''
+        else:
+            self.struct_byteorder_format=('>','<')[isLE]
 
     def clear(self):
         for (vname, vtype, varrsize, fmt, pos, sz) in self.__datastruct__:
@@ -207,6 +209,25 @@ class BinStruct(object, metaclass = BinStructMeta):
                 else:
                     self.parsed_data[vname]=type(self.parsed_data[vname])(data)
         self.raw_is_dirty=False
+
+    def pack(self, buffer=None):
+        if not self.raw_is_dirty:
+            return 
+        if buffer==None:
+            buffer=self.raw_data=bytearray(self.__packedsize__)
+        if len(buffer)<self.__packedsize__:
+            raise Exception("Error packing, buffer too small: " + __DEFINE_STRUCT__)
+
+        for (vname, vtype, varrsize, fmt, pos, sz) in self.__datastruct__:
+            if isinstance(self.parsed_data[vname], BinStruct):
+                #recursive unpack
+                self.parsed_data[vname].pack(buffer[pos:])
+            else:
+                if varrsize==1:
+                    struct.pack_into(self.struct_byteorder_format+fmt, buffer, pos, self.parsed_data[vname])
+                else:
+                    struct.pack_into(self.struct_byteorder_format+fmt, buffer, pos, *self.parsed_data[vname])
+
 
     def read_and_parse(self, stream):
         self.raw_pos  = stream.tell()

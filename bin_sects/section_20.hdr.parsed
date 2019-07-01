@@ -1,0 +1,12 @@
+:> ELF32_SectionHeader
+00000000 04 sh_name          : 0x10b
+00000004 04 sh_type          : 0x1
+00000008 04 sh_flags         : 0x30
+0000000c 04 sh_addr          : 0x0
+00000010 04 sh_offset        : 0x4e60dc
+00000014 04 sh_size          : 0x168
+00000018 04 sh_link          : 0x0
+0000001c 04 sh_info          : 0x0
+00000020 04 sh_addralign     : 0x1
+00000024 04 sh_entsize       : 0x1
+:< ELF32_SectionHeader
